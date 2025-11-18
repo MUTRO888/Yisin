@@ -39,13 +39,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupHotkey() {
         let settings = SettingsManager.shared
 
+        print("🔧 尝试注册快捷键: \(settings.hotkeyDisplay)")
+
         if let (keyCode, modifiers) = hotkeyManager.parseHotkeyString(settings.hotkeyDisplay) {
+            print("🔑 解析成功 - KeyCode: \(keyCode), Modifiers: \(modifiers)")
             let success = hotkeyManager.registerHotkey(keyCode: keyCode, modifiers: modifiers)
             if success {
                 print("✅ 快捷键注册成功: \(settings.hotkeyDisplay)")
             } else {
                 print("❌ 快捷键注册失败")
             }
+        } else {
+            print("❌ 快捷键解析失败: \(settings.hotkeyDisplay)")
         }
 
         hotkeyManager.onHotkeyPressed = { [weak self] in
