@@ -75,21 +75,56 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             DispatchQueue.main.async {
                 self?.menuBarController?.updateIconState(.thinking)
-                self?.translationWindow?.show(originalText: text, translatedText: "翻译中...")
+
+                let detector = LanguageDetector.shared
+                let detectedLang = detector.detectLanguage(text)
+                let sourceLang = detector.getLanguageLabel(detectedLang)
+                let targetLang = detectedLang == .chinese ? "EN" : "中文"
+
+                self?.translationWindow?.show(
+                    originalText: text,
+                    translatedText: "翻译中...",
+                    sourceLanguage: sourceLang,
+                    targetLanguage: targetLang
+                )
 
                 print("📝 捕获的文本: \(text)")
+                print("🌐 检测语言: \(sourceLang) → \(targetLang)")
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    let mockTranslation = "这是模拟翻译结果\n(Stage 4 将集成真实的 Gemini API)"
-                    self?.translationWindow?.updateContent(
-                        originalText: text,
-                        translatedText: mockTranslation
-                    )
+                Task {
+                    let result = await TranslationEngine.shared.translate(text: text)
 
-                    self?.menuBarController?.updateIconState(.completed)
+                    await MainActor.run {
+                        switch result {
+                        case .success(let original, let translated, let source, let target):
+                            let sourceLangLabel = detector.getLanguageLabel(source)
+                            let targetLangLabel = detector.getLanguageLabel(target)
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        self?.menuBarController?.updateIconState(.idle)
+                            self?.translationWindow?.updateContent(
+                                originalText: original,
+                                translatedText: translated,
+                                sourceLanguage: sourceLangLabel,
+                                targetLanguage: targetLangLabel
+                            )
+
+                            self?.menuBarController?.updateIconState(.completed)
+                            print("✅ 翻译成功")
+
+                        case .failure(let error):
+                            self?.translationWindow?.updateContent(
+                                originalText: text,
+                                translatedText: "❌ \(error)",
+                                sourceLanguage: sourceLang,
+                                targetLanguage: targetLang
+                            )
+
+                            self?.menuBarController?.updateIconState(.idle)
+                            print("❌ 翻译失败: \(error)")
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            self?.menuBarController?.updateIconState(.idle)
+                        }
                     }
                 }
             }

@@ -3,10 +3,10 @@ import SwiftUI
 struct TranslationResultView: View {
     let originalText: String
     let translatedText: String
+    let sourceLanguage: String
+    let targetLanguage: String
     let onClose: () -> Void
 
-    @State private var sourceLanguage = "EN"
-    @State private var targetLanguage = "中文"
     @State private var showCopiedFeedback = false
 
     var body: some View {
@@ -67,19 +67,6 @@ struct TranslationResultView: View {
 
     private var languageBar: some View {
         HStack(spacing: 12) {
-            Button(action: {
-                swap(&sourceLanguage, &targetLanguage)
-            }) {
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.left.arrow.right")
-                        .font(.system(size: 11))
-                    Text("切换")
-                        .font(.system(size: 11))
-                }
-                .foregroundColor(.blue)
-            }
-            .buttonStyle(.plain)
-
             Spacer()
 
             if showCopiedFeedback {

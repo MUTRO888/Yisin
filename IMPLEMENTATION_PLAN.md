@@ -72,21 +72,23 @@
 
 ## Stage 4: AI 翻译引擎集成
 **目标**: 接入 Gemini API，实现翻译核心逻辑
-**状态**: 📋 Not Started
+**状态**: ✅ Complete
 
-**待实现**:
-- [ ] Gemini API 客户端
-- [ ] 异步翻译请求
-- [ ] 错误处理与重试
-- [ ] 提示词模板系统
-- [ ] 语言检测
+**已完成**:
+- ✅ Gemini API 客户端 (REST API)
+- ✅ 异步翻译请求 (async/await)
+- ✅ 完整的错误处理
+- ✅ 提示词模板系统
+- ✅ 语言自动检测 (NLLanguageRecognizer)
+- ✅ 中英文双向翻译
+- ✅ 动态语言标签显示
 
 **交付物**:
 - `GeminiService.swift` - API 客户端
 - `TranslationEngine.swift` - 翻译引擎
 - `LanguageDetector.swift` - 语言检测
 
-**成功标准**: 能使用用户 API Key 完成实际翻译，结果准确显示
+**成功标准**: ✅ 能使用用户 API Key 完成实际翻译，结果准确显示
 
 ---
 

@@ -26,6 +26,8 @@ class TranslationWindow: NSWindow {
         let resultView = TranslationResultView(
             originalText: "",
             translatedText: "",
+            sourceLanguage: "EN",
+            targetLanguage: "中文",
             onClose: { [weak self] in
                 self?.fadeOut()
             }
@@ -35,16 +37,18 @@ class TranslationWindow: NSWindow {
         self.contentView = translationViewController?.view
     }
 
-    func show(originalText: String, translatedText: String = "翻译中...") {
-        updateContent(originalText: originalText, translatedText: translatedText)
+    func show(originalText: String, translatedText: String = "翻译中...", sourceLanguage: String = "EN", targetLanguage: String = "中文") {
+        updateContent(originalText: originalText, translatedText: translatedText, sourceLanguage: sourceLanguage, targetLanguage: targetLanguage)
         positionNearMouse()
         fadeIn()
     }
 
-    func updateContent(originalText: String, translatedText: String) {
+    func updateContent(originalText: String, translatedText: String, sourceLanguage: String = "EN", targetLanguage: String = "中文") {
         let resultView = TranslationResultView(
             originalText: originalText,
             translatedText: translatedText,
+            sourceLanguage: sourceLanguage,
+            targetLanguage: targetLanguage,
             onClose: { [weak self] in
                 self?.fadeOut()
             }
