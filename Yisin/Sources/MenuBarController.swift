@@ -27,9 +27,15 @@ class MenuBarController: NSObject {
     private func setupMenu() {
         let menu = NSMenu()
 
-        menu.addItem(NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ","))
+        let settingsItem = NSMenuItem(title: "设置", action: #selector(openSettings), keyEquivalent: ",")
+        settingsItem.target = self
+        menu.addItem(settingsItem)
+
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "退出 Yisin", action: #selector(quit), keyEquivalent: "q"))
+
+        let quitItem = NSMenuItem(title: "退出 Yisin", action: #selector(quit), keyEquivalent: "q")
+        quitItem.target = self
+        menu.addItem(quitItem)
 
         statusItem.menu = menu
     }
