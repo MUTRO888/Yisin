@@ -16,6 +16,7 @@ class SettingsManager: ObservableObject {
     @Published var hotkeyDisplay: String {
         didSet {
             UserDefaults.standard.set(hotkeyDisplay, forKey: "hotkeyDisplay")
+            NotificationCenter.default.post(name: NSNotification.Name("HotkeyChanged"), object: nil)
         }
     }
 

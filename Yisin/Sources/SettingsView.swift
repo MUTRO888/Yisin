@@ -60,22 +60,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("快捷键")
 
-            HStack {
-                Text(settings.hotkeyDisplay)
-                    .font(.system(size: 13, design: .monospaced))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .cornerRadius(6)
-
-                Spacer()
-
-                Button(isRecordingHotkey ? "按下新快捷键..." : "更改") {
-                    isRecordingHotkey.toggle()
-                }
-                .buttonStyle(.plain)
-                .foregroundColor(.blue)
-            }
+            HotkeyRecorderView(hotkeyString: $settings.hotkeyDisplay)
 
             Text("在任意应用中选中文本后按此快捷键进行翻译")
                 .font(.system(size: 11))

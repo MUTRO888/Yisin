@@ -14,17 +14,81 @@ struct YisinApp: App {
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var menuBarController: MenuBarController?
+    private let hotkeyManager = HotkeyManager.shared
+    private let textCapture = TextCaptureService.shared
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         setupMenuBar()
+        setupHotkey()
         checkAccessibilityPermissions()
     }
 
     private func setupMenuBar() {
         menuBarController = MenuBarController()
         statusItem = menuBarController?.statusItem
+    }
+
+    private func setupHotkey() {
+        let settings = SettingsManager.shared
+
+        if let (keyCode, modifiers) = hotkeyManager.parseHotkeyString(settings.hotkeyDisplay) {
+            let success = hotkeyManager.registerHotkey(keyCode: keyCode, modifiers: modifiers)
+            if success {
+                print("✅ 快捷键注册成功: \(settings.hotkeyDisplay)")
+            } else {
+                print("❌ 快捷键注册失败")
+            }
+        }
+
+        hotkeyManager.onHotkeyPressed = { [weak self] in
+            self?.handleHotkeyPressed()
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("HotkeyChanged"),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.setupHotkey()
+        }
+    }
+
+    private func handleHotkeyPressed() {
+        menuBarController?.updateIconState(.listening)
+
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let text = self?.textCapture.captureSelectedText(), !text.isEmpty else {
+                DispatchQueue.main.async {
+                    self?.menuBarController?.updateIconState(.idle)
+                    self?.showNoTextAlert()
+                }
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.menuBarController?.updateIconState(.thinking)
+                print("📝 捕获的文本: \(text)")
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self?.menuBarController?.updateIconState(.completed)
+
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        self?.menuBarController?.updateIconState(.idle)
+                    }
+                }
+            }
+        }
+    }
+
+    private func showNoTextAlert() {
+        let alert = NSAlert()
+        alert.messageText = "未检测到选中文本"
+        alert.informativeText = "请先选中要翻译的文本，然后按快捷键。"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "好的")
+        alert.runModal()
     }
 
     private func checkAccessibilityPermissions() {
