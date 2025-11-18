@@ -45,10 +45,12 @@ Text to translate:
 """
 
     private init() {
-        self.apiKey = loadAPIKeyFromKeychain() ?? ""
+        self.apiKey = ""
         self.hotkeyDisplay = UserDefaults.standard.string(forKey: "hotkeyDisplay") ?? "⌘⇧T"
         self.systemPrompt = UserDefaults.standard.string(forKey: "systemPrompt") ?? Self.defaultPrompt
         self.saveHistory = UserDefaults.standard.bool(forKey: "saveHistory")
+
+        self.apiKey = loadAPIKeyFromKeychain() ?? ""
     }
 
     private func saveAPIKeyToKeychain(_ key: String) {
