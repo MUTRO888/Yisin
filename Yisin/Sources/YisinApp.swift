@@ -16,13 +16,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var menuBarController: MenuBarController?
     private let hotkeyManager = HotkeyManager.shared
     private let textCapture = TextCaptureService.shared
+    private var translationWindow: TranslationWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         setupMenuBar()
         setupHotkey()
+        setupTranslationWindow()
         checkAccessibilityPermissions()
+    }
+
+    private func setupTranslationWindow() {
+        translationWindow = TranslationWindow()
     }
 
     private func setupMenuBar() {
@@ -69,9 +75,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             DispatchQueue.main.async {
                 self?.menuBarController?.updateIconState(.thinking)
+                self?.translationWindow?.show(originalText: text, translatedText: "翻译中...")
+
                 print("📝 捕获的文本: \(text)")
 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    let mockTranslation = "这是模拟翻译结果\n(Stage 4 将集成真实的 Gemini API)"
+                    self?.translationWindow?.updateContent(
+                        originalText: text,
+                        translatedText: mockTranslation
+                    )
+
                     self?.menuBarController?.updateIconState(.completed)
 
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
