@@ -23,8 +23,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         setupMenuBar()
+        checkAccessibilityPermissions()
         setupHotkey()
         setupWindows()
+    }
+
+    private func checkAccessibilityPermissions() {
+        let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
+        let accessEnabled = AXIsProcessTrustedWithOptions(options)
+
+        if accessEnabled {
+            print("✅ 辅助功能权限已授予")
+        } else {
+            print("⚠️ 辅助功能权限未授予，快捷键可能无法工作")
+        }
     }
 
     private func setupWindows() {
