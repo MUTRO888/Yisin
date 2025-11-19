@@ -1,12 +1,11 @@
 import AppKit
-import Carbon
 
 class HotkeyManager {
     static let shared = HotkeyManager()
 
-    private var eventHandler: EventHandlerRef?
-    private var hotKeyRef: EventHotKeyRef?
-    private var hotKeyID = EventHotKeyID(signature: OSType(0x59534E), id: 1)
+    private var eventMonitor: Any?
+    private var targetKeyCode: UInt32?
+    private var targetModifiers: UInt32?
 
     var onHotkeyPressed: (() -> Void)?
 
@@ -15,73 +14,42 @@ class HotkeyManager {
     func registerHotkey(keyCode: UInt32, modifiers: UInt32) -> Bool {
         unregisterHotkey()
 
-        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        self.targetKeyCode = keyCode
+        self.targetModifiers = modifiers
 
-        let status = InstallEventHandler(
-            GetApplicationEventTarget(),
-            { (nextHandler, event, userData) -> OSStatus in
-                guard let manager = userData?.assumingMemoryBound(to: HotkeyManager.self).pointee else {
-                    return OSStatus(eventNotHandledErr)
-                }
+        // 使用 NSEvent 本地监听器监听所有按键事件
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self = self,
+                  let targetKeyCode = self.targetKeyCode,
+                  let targetModifiers = self.targetModifiers else {
+                return event
+            }
 
-                var hotKeyID = EventHotKeyID()
-                GetEventParameter(
-                    event,
-                    EventParamName(kEventParamDirectObject),
-                    EventParamType(typeEventHotKeyID),
-                    nil,
-                    MemoryLayout<EventHotKeyID>.size,
-                    nil,
-                    &hotKeyID
-                )
+            if event.keyCode == targetKeyCode {
+                let eventModifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask).rawValue
 
-                if hotKeyID.id == manager.hotKeyID.id {
+                // 检查修饰键是否匹配
+                if eventModifiers == UInt(targetModifiers) {
                     DispatchQueue.main.async {
-                        manager.onHotkeyPressed?()
+                        self.onHotkeyPressed?()
                     }
-                    return noErr
+                    return nil // 消费事件
                 }
+            }
 
-                return OSStatus(eventNotHandledErr)
-            },
-            1,
-            &eventType,
-            Unmanaged.passUnretained(self).toOpaque(),
-            &eventHandler
-        )
-
-        guard status == noErr else {
-            return false
+            return event
         }
 
-        var hotKeyRef: EventHotKeyRef?
-        let registerStatus = RegisterEventHotKey(
-            keyCode,
-            modifiers,
-            hotKeyID,
-            GetApplicationEventTarget(),
-            0,
-            &hotKeyRef
-        )
-
-        guard registerStatus == noErr else {
-            return false
-        }
-
-        self.hotKeyRef = hotKeyRef
         return true
     }
 
     func unregisterHotkey() {
-        if let hotKeyRef = hotKeyRef {
-            UnregisterEventHotKey(hotKeyRef)
-            self.hotKeyRef = nil
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
-
-        if let eventHandler = eventHandler {
-            RemoveEventHandler(eventHandler)
-            self.eventHandler = nil
-        }
+        targetKeyCode = nil
+        targetModifiers = nil
     }
 
     func parseHotkeyString(_ hotkeyString: String) -> (keyCode: UInt32, modifiers: UInt32)? {
@@ -93,13 +61,13 @@ class HotkeyManager {
         for component in components.dropLast() {
             switch component {
             case "⌘":
-                modifiers |= UInt32(cmdKey)
+                modifiers |= UInt32(NSEvent.ModifierFlags.command.rawValue)
             case "⇧":
-                modifiers |= UInt32(shiftKey)
+                modifiers |= UInt32(NSEvent.ModifierFlags.shift.rawValue)
             case "⌥":
-                modifiers |= UInt32(optionKey)
+                modifiers |= UInt32(NSEvent.ModifierFlags.option.rawValue)
             case "⌃":
-                modifiers |= UInt32(controlKey)
+                modifiers |= UInt32(NSEvent.ModifierFlags.control.rawValue)
             default:
                 break
             }
