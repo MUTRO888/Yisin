@@ -17,12 +17,12 @@ class HotkeyManager {
         self.targetKeyCode = keyCode
         self.targetModifiers = modifiers
 
-        // 使用 NSEvent 本地监听器监听所有按键事件
-        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+        // 使用全局事件监听器（不仅限于本应用）
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self = self,
                   let targetKeyCode = self.targetKeyCode,
                   let targetModifiers = self.targetModifiers else {
-                return event
+                return
             }
 
             if event.keyCode == targetKeyCode {
@@ -33,11 +33,8 @@ class HotkeyManager {
                     DispatchQueue.main.async {
                         self.onHotkeyPressed?()
                     }
-                    return nil // 消费事件
                 }
             }
-
-            return event
         }
 
         return true
